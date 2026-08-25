@@ -1,0 +1,62 @@
+name: jellyfin
+services:
+    jellyfin:
+        container_name: jellyfin
+        deploy:
+            resources:
+                reservations:
+                    memory: "268435456"
+        devices:
+            - /dev/dri:/dev/dri
+            - /dev/vcsm:/dev/vcsm
+            - /dev/vchiq:/dev/vchiq
+            - /dev/video10:/dev/video10
+            - /dev/video11:/dev/video11
+            - /dev/video12:/dev/video12
+        environment:
+            PGID: "${PGID}"
+            PUID: "${PUID}"
+            TZ: ${TZ}
+        image: linuxserver/jellyfin:10.11.10@sha256:31e89a4ddb806fa0e17060f58cf5c64d324beb1755070f41ca65dc14613d83a1
+        labels:
+            icon: https://cdn.jsdelivr.net/gh/IceWhaleTech/CasaOS-AppStore@gh-pages/apps/org.icewhale.jellyfin/assets/icon.svg
+        network_mode: bridge
+        ports:
+            - target: 8096
+              published: "8097"
+              protocol: tcp
+            - target: 8920
+              published: "8921"
+              protocol: tcp
+            - target: 7359
+              published: "7359"
+              protocol: tcp
+            - target: 1900
+              published: "1901"
+              protocol: tcp
+        restart: unless-stopped
+        volumes:
+            - type: bind
+              source: ${APPDATA_ROOT}/jellyfin/config
+              target: /config
+            - type: bind
+              source: ${JELLYFIN_MEDIA_DIR}
+              target: /Media
+            - type: bind
+              source: /opt/vc/lib
+              target: /opt/vc/lib
+x-casaos:
+    app_id: org.icewhale.jellyfin
+    hostname: ${SERVER_IP}
+    icon: https://cdn.jsdelivr.net/gh/IceWhaleTech/CasaOS-AppStore@gh-pages/apps/org.icewhale.jellyfin/assets/icon.svg
+    index: /
+    is_uncontrolled: false
+    main: jellyfin
+    port_map: "8097"
+    repo_id: zimaos-appstore
+    scheme: http
+    store_app_id: jellyfin
+    title:
+        custom: Jellyfin
+        en_US: Jellyfin
+    version: 10.11.10

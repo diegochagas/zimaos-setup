@@ -1,0 +1,111 @@
+name: immich
+services:
+    database:
+        container_name: immich-postgres
+        environment:
+            POSTGRES_DB: immich
+            POSTGRES_INITDB_ARGS: --data-checksums
+            POSTGRES_PASSWORD: ${IMMICH_DB_PASSWORD}
+            POSTGRES_USER: postgres
+        hostname: immich-postgres
+        image: ghcr.io/immich-app/postgres:14-vectorchord0.4.3-pgvectors0.2.0@sha256:bcf63357191b76a916ae5eb93464d65c07511da41e3bf7a8416db519b40b1c23
+        labels:
+            icon: https://cdn.jsdelivr.net/gh/IceWhaleTech/CasaOS-AppStore@gh-pages/apps/org.icewhale.immich/assets/icon.svg
+        networks:
+            immich: null
+        restart: unless-stopped
+        volumes:
+            - type: bind
+              source: ${APPDATA_ROOT}/immich/pgdata
+              target: /var/lib/postgresql/data
+              bind:
+                create_host_path: true
+    immich-machine-learning:
+        container_name: immich-machine-learning
+        environment:
+            DB_DATABASE_NAME: immich
+            DB_PASSWORD: ${IMMICH_DB_PASSWORD}
+            DB_USERNAME: postgres
+        hostname: immich-machine-learning
+        healthcheck: {}
+        image: ghcr.io/immich-app/immich-machine-learning:v2.7.2@sha256:ebf6321014e3a4f4dbd12a2659baffcf2265637f853a885aa107dc577b554ce0
+        labels:
+            icon: https://cdn.jsdelivr.net/gh/IceWhaleTech/CasaOS-AppStore@gh-pages/apps/org.icewhale.immich/assets/icon.svg
+        networks:
+            immich: null
+        restart: unless-stopped
+        volumes:
+            - type: bind
+              source: ${APPDATA_ROOT}/immich/model-cache
+              target: /cache
+              bind:
+                create_host_path: true
+    immich-server:
+        container_name: immich-server
+        depends_on:
+            database:
+                condition: service_started
+                required: true
+            redis:
+                condition: service_started
+                required: true
+        deploy:
+            resources:
+                reservations:
+                    memory: "1073741824"
+        environment:
+            DB_DATABASE_NAME: immich
+            DB_PASSWORD: ${IMMICH_DB_PASSWORD}
+            DB_USERNAME: postgres
+        hostname: immich-server
+        healthcheck: {}
+        image: ghcr.io/immich-app/immich-server:v2.7.2@sha256:87d31d062ccc7675b29be1736a6e6fbf9d6d6c9920e1f3275a87671edecf83ca
+        labels:
+            icon: https://cdn.jsdelivr.net/gh/IceWhaleTech/CasaOS-AppStore@gh-pages/apps/org.icewhale.immich/assets/icon.svg
+        networks:
+            immich: null
+        ports:
+            - mode: ingress
+              target: 2283
+              published: "2283"
+              protocol: tcp
+        restart: unless-stopped
+        volumes:
+            - type: bind
+              source: ${IMMICH_GALLERY_DIR}
+              target: /usr/src/app/upload
+            - type: bind
+              source: /etc/localtime
+              target: /etc/localtime
+    redis:
+        container_name: immich-redis
+        hostname: immich-redis
+        healthcheck:
+            test:
+                - CMD-SHELL
+                - redis-cli ping || exit 1
+        image: docker.io/valkey/valkey:9@sha256:3eeb09785cd61ec8e3be35f8804c8892080f3ca21934d628abc24ee4ed1698f6
+        labels:
+            icon: https://cdn.jsdelivr.net/gh/IceWhaleTech/CasaOS-AppStore@gh-pages/apps/org.icewhale.immich/assets/icon.svg
+        networks:
+            immich: null
+        restart: unless-stopped
+networks:
+    immich:
+        name: immich_immich
+        driver: bridge
+x-casaos:
+    app_id: org.icewhale.immich
+    hostname: ${SERVER_IP}
+    icon: https://cdn.jsdelivr.net/gh/IceWhaleTech/CasaOS-AppStore@gh-pages/apps/org.icewhale.immich/assets/icon.svg
+    index: /
+    is_uncontrolled: false
+    main: immich-server
+    port_map: "2283"
+    repo_id: zimaos-appstore
+    scheme: http
+    store_app_id: immich
+    title:
+        custom: Immich
+        en_US: Immich
+    version: 2.7.2

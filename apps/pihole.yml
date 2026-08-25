@@ -1,0 +1,54 @@
+name: pihole
+services:
+    pihole:
+        cap_add:
+            - NET_ADMIN
+        container_name: pihole
+        deploy:
+            resources:
+                reservations:
+                    memory: "67108864"
+        dns:
+            - 1.1.1.1
+            - 8.8.8.8
+        environment:
+            FTLCONF_dns_listeningMode: all
+            FTLCONF_webserver_api_password: ${PIHOLE_WEB_PASSWORD}
+            TZ: ${TZ}
+        image: pihole/pihole:2026.05.0@sha256:441d3146d6b4c513e29c5157894ff2c29284be1ad50a2cb9547574de3996f913
+        labels:
+            icon: https://cdn.jsdelivr.net/gh/IceWhaleTech/CasaOS-AppStore@gh-pages/apps/org.icewhale.pihole/assets/icon.svg
+        network_mode: bridge
+        ports:
+            - target: 80
+              published: "8800"
+              protocol: tcp
+            - target: 53
+              published: "53"
+              protocol: tcp
+            - target: 53
+              published: "53"
+              protocol: udp
+            - target: 443
+              published: "8443"
+              protocol: tcp
+        restart: unless-stopped
+        volumes:
+            - type: bind
+              source: ${APPDATA_ROOT}/pihole/etc/pihole/
+              target: /etc/pihole
+x-casaos:
+    app_id: org.icewhale.pihole
+    hostname: ${SERVER_IP}
+    icon: https://cdn.jsdelivr.net/gh/IceWhaleTech/CasaOS-AppStore@gh-pages/apps/org.icewhale.pihole/assets/icon.svg
+    index: /admin
+    is_uncontrolled: false
+    main: pihole
+    port_map: "8800"
+    repo_id: zimaos-appstore
+    scheme: http
+    store_app_id: pihole
+    title:
+        custom: Pi-hole
+        en_US: Pi-hole
+    version: 2026.5.0

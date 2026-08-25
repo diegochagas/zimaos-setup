@@ -1,0 +1,87 @@
+#!/usr/bin/env bash
+
+# shellcheck disable=SC2034
+
+########################################
+# ZimaOS Setup configuration
+#
+# Copy this file to config.sh and fill in every value
+# for the target installation. config.sh is gitignored,
+# so paths, addresses and secrets never reach the
+# repository; keep a filled-in copy in the Credentials
+# folder (zimaos-setup__config.sh).
+#
+# setup.sh and export.sh refuse to run while a required
+# value is missing.
+########################################
+
+#
+# Root folder where ZimaOS keeps per-app data on the
+# internal drive (usually /DATA/AppData on ZimaOS).
+#
+APPDATA_ROOT=""
+
+#
+# Mount point of the external data drive. setup.sh
+# refuses to install apps while this path is not a
+# mounted drive, so app data is never written to the
+# internal disk by mistake.
+#
+DATA4TB_MOUNT=""
+
+#
+# Per-app data locations, normally folders on the
+# external drive:
+#
+# IMMICH_GALLERY_DIR         Immich photo/video library.
+# NEXTCLOUD_DATA_DIR         Nextcloud user data.
+# JELLYFIN_MEDIA_DIR         Jellyfin media library.
+# QBITTORRENT_DOWNLOADS_DIR  qBittorrent download root.
+#
+IMMICH_GALLERY_DIR=""
+NEXTCLOUD_DATA_DIR=""
+JELLYFIN_MEDIA_DIR=""
+QBITTORRENT_DOWNLOADS_DIR=""
+
+#
+# LAN address of the server. Used by ZimaOS to build
+# the "Open Web UI" links of the installed apps.
+#
+SERVER_IP=""
+
+#
+# Timezone (e.g. a TZ database name) and user/group ids
+# passed to the containers.
+#
+TZ=""
+PUID=""
+PGID=""
+
+#
+# Secrets. The exported app files reference these
+# variables instead of the real values.
+#
+# PIHOLE_WEB_PASSWORD  Password of the Pi-hole admin UI.
+# POSTGRESQL_*         Credentials of the shared
+#                      PostgreSQL app (used by
+#                      finances-tracker).
+# IMMICH_DB_PASSWORD   Password of Immich's internal
+#                      database. Must match the restored
+#                      pgdata when recovering from a
+#                      backup.
+#
+PIHOLE_WEB_PASSWORD=""
+POSTGRESQL_DB=""
+POSTGRESQL_USER=""
+POSTGRESQL_PASSWORD=""
+IMMICH_DB_PASSWORD=""
+
+#
+# Extra app stores registered before installing apps,
+# one URL per array entry. The official ZimaOS store is
+# already registered on a fresh installation. Leave the
+# array empty to register none.
+#
+EXTRA_APP_STORES=(
+    "https://github.com/bigbeartechworld/big-bear-casaos/archive/refs/heads/master.zip"
+)

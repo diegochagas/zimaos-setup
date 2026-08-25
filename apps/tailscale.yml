@@ -1,0 +1,42 @@
+name: tailscale
+services:
+    tailscale:
+        cap_add:
+            - NET_ADMIN
+            - NET_RAW
+        container_name: tailscale
+        deploy:
+            resources:
+                reservations:
+                    memory: "134217728"
+        entrypoint:
+            - /bin/sh
+            - -c
+            - tailscaled --state=/var/lib/tailscale/tailscaled.state & sleep 10; tailscale web --listen 0.0.0.0:5252
+        environment:
+            TS_STATE_DIR: /var/lib/tailscale
+        image: tailscale/tailscale:v1.98.3@sha256:36b7271dc1bfe146a6d4363553d830ae5499f929a52eea990d0df4e749843b00
+        labels:
+            icon: https://cdn.jsdelivr.net/gh/IceWhaleTech/CasaOS-AppStore@gh-pages/apps/org.icewhale.tailscale/assets/icon.svg
+        network_mode: host
+        restart: unless-stopped
+        volumes:
+            - type: bind
+              source: ${APPDATA_ROOT}/tailscale
+              target: /var/lib/tailscale
+            - type: bind
+              source: /dev/net/tun
+              target: /dev/net/tun
+x-casaos:
+    app_id: org.icewhale.tailscale
+    icon: https://cdn.jsdelivr.net/gh/IceWhaleTech/CasaOS-AppStore@gh-pages/apps/org.icewhale.tailscale/assets/icon.svg
+    index: /
+    is_uncontrolled: false
+    main: tailscale
+    port_map: "5252"
+    repo_id: zimaos-appstore
+    scheme: ""
+    store_app_id: tailscale
+    title:
+        en_US: Tailscale
+    version: 1.98.3
