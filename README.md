@@ -21,6 +21,26 @@ This repository is the server-side counterpart of
 (app **data**): this repo reinstalls the apps, homelab-backup's `restore.sh`
 brings their data back.
 
+## Requirements
+
+This assumes ZimaOS is already installed and running — see
+[Not Covered by This Repository](#not-covered-by-this-repository) for
+the initial server setup this repo doesn't handle. Beyond ZimaOS's own
+hardware minimums for your board, sizing depends entirely on which apps
+from `apps/` you actually run — this repo makes no assumption about
+that:
+
+| Resource | Notes |
+| --- | --- |
+| RAM | Each container (Immich, Nextcloud, Jellyfin, Pi-hole, PostgreSQL, qBittorrent, ...) adds its own footprint on top of ZimaOS/CasaOS itself. Immich (face/object recognition) and Jellyfin (transcoding) are the heaviest — plan for 8 GB+ if you run either, more than ZimaOS's bare minimum. |
+| CPU | Jellyfin transcoding and Immich's ML jobs are CPU- (or GPU-, if passed through) bound. A low-power board handles file-serving, Pi-hole and Vaultwarden fine but will struggle to transcode video in real time. |
+| Storage | Two external drives beyond the internal disk, per the existing setup: `DATA4TB` (photos/media/Nextcloud data — `setup.sh` refuses to run while it isn't mounted at `DATA4TB_MOUNT`) and `BACKUP4TB` (used by [homelab-backup](https://github.com/diegochagas/homelab-backup), not this repo). Size the internal disk under `APPDATA_ROOT` for container images/databases separately from the media libraries. |
+| Network | A static LAN IP/DNS reservation for `SERVER_IP` (see Not Covered) and internet access to pull Docker images during install. |
+
+This repo doesn't benchmark or enforce any of the above — `setup.sh`
+only checks that `casaos-cli` is present and `DATA4TB_MOUNT` is actually
+mounted before installing anything.
+
 ## How ZimaOS Installs Apps
 
 ZimaOS is built on CasaOS. Installing an app from the App Store just renders
