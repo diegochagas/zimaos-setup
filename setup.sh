@@ -41,6 +41,12 @@ readonly LOG_FILE
 
 readonly APPS_DIR="$SCRIPT_DIR/apps"
 
+# Absolute path of the Immich system config file (config/immich.yml,
+# committed to the repo — see that file for what it pins). Computed
+# from SCRIPT_DIR rather than kept in config.sh since it's not a
+# per-machine value, just wherever this repo happens to be cloned.
+readonly IMMICH_CONFIG_PATH="$SCRIPT_DIR/config/immich.yml"
+
 # One folder per installed CasaOS app. Used to detect already-installed
 # apps: the CLI's list omits apps in some states (e.g. vaultwarden while
 # listed as unknown), but the folder is always present.
@@ -96,12 +102,12 @@ fi
 # file is left untouched. Kept single-quoted on purpose:
 # envsubst receives the variable names, not the values.
 # shellcheck disable=SC2016
-readonly RENDER_VARIABLES='${APPDATA_ROOT} ${DATA4TB_MOUNT} ${IMMICH_GALLERY_DIR} ${NEXTCLOUD_DATA_DIR} ${JELLYFIN_MEDIA_DIR} ${QBITTORRENT_DOWNLOADS_DIR} ${SERVER_IP} ${TZ} ${PUID} ${PGID} ${PIHOLE_WEB_PASSWORD} ${POSTGRESQL_DB} ${POSTGRESQL_USER} ${POSTGRESQL_PASSWORD} ${IMMICH_DB_PASSWORD}'
+readonly RENDER_VARIABLES='${APPDATA_ROOT} ${DATA4TB_MOUNT} ${IMMICH_GALLERY_DIR} ${IMMICH_CONFIG_PATH} ${NEXTCLOUD_DATA_DIR} ${JELLYFIN_MEDIA_DIR} ${QBITTORRENT_DOWNLOADS_DIR} ${SERVER_IP} ${TZ} ${PUID} ${PGID} ${PIHOLE_WEB_PASSWORD} ${POSTGRESQL_DB} ${POSTGRESQL_USER} ${POSTGRESQL_PASSWORD} ${IMMICH_DB_PASSWORD}'
 
-export APPDATA_ROOT DATA4TB_MOUNT IMMICH_GALLERY_DIR NEXTCLOUD_DATA_DIR \
-    JELLYFIN_MEDIA_DIR QBITTORRENT_DOWNLOADS_DIR SERVER_IP TZ PUID PGID \
-    PIHOLE_WEB_PASSWORD POSTGRESQL_DB POSTGRESQL_USER POSTGRESQL_PASSWORD \
-    IMMICH_DB_PASSWORD
+export APPDATA_ROOT DATA4TB_MOUNT IMMICH_GALLERY_DIR IMMICH_CONFIG_PATH \
+    NEXTCLOUD_DATA_DIR JELLYFIN_MEDIA_DIR QBITTORRENT_DOWNLOADS_DIR SERVER_IP \
+    TZ PUID PGID PIHOLE_WEB_PASSWORD POSTGRESQL_DB POSTGRESQL_USER \
+    POSTGRESQL_PASSWORD IMMICH_DB_PASSWORD
 
 ########################################
 # Runtime options
@@ -346,6 +352,15 @@ check_environment() {
     done
 
     print_info "✅ casaos-cli available"
+
+    # A missing file here would make Docker bind-mount an empty directory
+    # onto immich-server's expected config *file* path instead, which
+    # fails the container rather than just skipping the config.
+    if [[ ! -f "$IMMICH_CONFIG_PATH" ]]; then
+        print_info "❌ $IMMICH_CONFIG_PATH not found."
+        print_info "   config/immich.yml should be part of this repo checkout."
+        exit 1
+    fi
 
     if mountpoint -q "$DATA4TB_MOUNT"; then
         print_info "✅ External drive mounted at $DATA4TB_MOUNT"

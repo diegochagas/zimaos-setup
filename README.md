@@ -59,6 +59,24 @@ the installed apps into [apps/](apps) with paths and secrets replaced by
 variables, and [setup.sh](setup.sh) reinstalls them from those files with
 the values from `config.sh`.
 
+## Immich Storage Template
+
+Immich's storage template (Administration > Settings > Storage Template —
+how uploaded photos/videos are laid out on disk) lives in Immich's own
+database, not in a CasaOS compose customization, so it isn't captured by
+`export.sh`/`setup.sh` the way ports or volume paths are. It's pinned
+declaratively instead: [config/immich.yml](config/immich.yml) is mounted
+read-only into `immich-server` via `IMMICH_CONFIG_FILE`
+([Immich docs](https://docs.immich.app/install/config-file/)), which makes
+Immich enforce it on every start.
+
+**Trade-off:** setting `IMMICH_CONFIG_FILE` makes Immich disable editing
+*any* system setting from the web UI, not just the storage template — the
+whole Administration > Settings section becomes read-only. To change the
+template (or add other settings), edit `config/immich.yml` and restart the
+`immich-server` container; don't try to do it from the web UI while this
+file is mounted.
+
 ## Step 1 - Bootstrap SSH Access
 
 On a fresh installation, create the user in the ZimaOS web UI first, then

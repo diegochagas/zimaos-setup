@@ -1,0 +1,14 @@
+# Immich system config file, mounted read-only into immich-server via
+# IMMICH_CONFIG_FILE (see apps/immich.yml). Setting this env var makes
+# Immich enforce every value below on each start and disables editing
+# ANY system setting from Administration > Settings in the web UI —
+# not just the ones listed here. Unlisted keys keep Immich's built-in
+# defaults. See https://docs.immich.app/install/config-file/
+#
+# To change the storage template, edit this file and reinstall/restart
+# the immich-server container — the web UI's Storage Template page is
+# read-only while this file is mounted.
+storageTemplate:
+  enabled: true
+  hashVerificationEnabled: true
+  template: "{{y}}/{{MM}}/{{filename}}"

@@ -57,6 +57,7 @@ services:
             DB_DATABASE_NAME: immich
             DB_PASSWORD: ${IMMICH_DB_PASSWORD}
             DB_USERNAME: postgres
+            IMMICH_CONFIG_FILE: /immich-config.yml
         hostname: immich-server
         healthcheck: {}
         image: ghcr.io/immich-app/immich-server:v2.7.2@sha256:87d31d062ccc7675b29be1736a6e6fbf9d6d6c9920e1f3275a87671edecf83ca
@@ -77,6 +78,10 @@ services:
             - type: bind
               source: /etc/localtime
               target: /etc/localtime
+            - type: bind
+              source: ${IMMICH_CONFIG_PATH}
+              target: /immich-config.yml
+              read_only: true
     redis:
         container_name: immich-redis
         hostname: immich-redis

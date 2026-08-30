@@ -33,6 +33,9 @@ fi
 source "$CONFIG_FILE"
 
 readonly APPS_DIR="$SCRIPT_DIR/apps"
+
+# Must match the same computation in setup.sh.
+readonly IMMICH_CONFIG_PATH="$SCRIPT_DIR/config/immich.yml"
 readonly API_URL_FILE="/var/run/casaos/app-management.url"
 
 # One folder per installed CasaOS app. This is the source of the app
@@ -132,7 +135,8 @@ template_app() {
         immich)
             sed \
                 -e "s|POSTGRES_PASSWORD: .*|POSTGRES_PASSWORD: \${IMMICH_DB_PASSWORD}|" \
-                -e "s|DB_PASSWORD: .*|DB_PASSWORD: \${IMMICH_DB_PASSWORD}|"
+                -e "s|DB_PASSWORD: .*|DB_PASSWORD: \${IMMICH_DB_PASSWORD}|" \
+                -e "s|source: $IMMICH_CONFIG_PATH\$|source: \${IMMICH_CONFIG_PATH}|"
             ;;
 
         *)
