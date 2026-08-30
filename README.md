@@ -30,12 +30,12 @@ hardware minimums for your board, sizing depends entirely on which apps
 from `apps/` you actually run — this repo makes no assumption about
 that:
 
-| Resource | Notes |
-| --- | --- |
-| RAM | Each container (Immich, Nextcloud, Jellyfin, Pi-hole, PostgreSQL, qBittorrent, ...) adds its own footprint on top of ZimaOS/CasaOS itself. Immich (face/object recognition) and Jellyfin (transcoding) are the heaviest — plan for 8 GB+ if you run either, more than ZimaOS's bare minimum. |
-| CPU | Jellyfin transcoding and Immich's ML jobs are CPU- (or GPU-, if passed through) bound. A low-power board handles file-serving, Pi-hole and Vaultwarden fine but will struggle to transcode video in real time. |
-| Storage | Two external drives beyond the internal disk, per the existing setup: `DATA4TB` (photos/media/Nextcloud data — `setup.sh` refuses to run while it isn't mounted at `DATA4TB_MOUNT`) and `BACKUP4TB` (used by [homelab-backup](https://github.com/diegochagas/homelab-backup), not this repo). Size the internal disk under `APPDATA_ROOT` for container images/databases separately from the media libraries. |
-| Network | A static LAN IP/DNS reservation for `SERVER_IP` (see Not Covered) and internet access to pull Docker images during install. |
+| Resource | Minimum (light apps: Pi-hole, Vaultwarden, file serving) | Comfortable (full stack, incl. Immich/Jellyfin) |
+| --- | --- | --- |
+| RAM | ZimaOS/CasaOS's own baseline + a few hundred MB per light container | 8 GB+ — Immich (face/object recognition) and Jellyfin (transcoding) are the heaviest containers |
+| CPU | Any board ZimaOS supports | More headroom or GPU passthrough for real-time Jellyfin transcoding and Immich's ML jobs |
+| Storage | Internal disk only, for `APPDATA_ROOT` | + external `DATA4TB` (photos/media/Nextcloud data — required, must be mounted at `DATA4TB_MOUNT` before `setup.sh` will run) and `BACKUP4TB` (used by [homelab-backup](https://github.com/diegochagas/homelab-backup), not this repo) |
+| Network | LAN connectivity to pull Docker images | Static LAN IP/DNS reservation for `SERVER_IP` (see Not Covered) |
 
 This repo doesn't benchmark or enforce any of the above — `setup.sh`
 only checks that `casaos-cli` is present and `DATA4TB_MOUNT` is actually
