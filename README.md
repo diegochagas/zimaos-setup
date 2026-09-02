@@ -197,6 +197,9 @@ filled-in copy):
 | `PIHOLE_WEB_PASSWORD` | Pi-hole admin UI password |
 | `POSTGRESQL_DB/USER/PASSWORD` | Shared PostgreSQL app (used by finances-tracker) |
 | `IMMICH_DB_PASSWORD` | Immich internal database — must match restored pgdata |
+| `ROMM_DB_PASSWORD` | RomM's MariaDB app user — must match restored mysql data |
+| `ROMM_DB_ROOT_PASSWORD` | RomM's MariaDB root password |
+| `ROMM_IGDB_CLIENT_ID` / `ROMM_IGDB_CLIENT_SECRET` | IGDB API credentials RomM uses for game metadata scraping |
 | `EXTRA_APP_STORES` | Extra app stores to register (optional) |
 
 ## Not Covered by This Repository

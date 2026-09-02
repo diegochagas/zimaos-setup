@@ -139,6 +139,15 @@ template_app() {
                 -e "s|source: $IMMICH_CONFIG_PATH\$|source: \${IMMICH_CONFIG_PATH}|"
             ;;
 
+        romm)
+            sed \
+                -e "s|DB_PASSWD: .*|DB_PASSWD: \${ROMM_DB_PASSWORD}|" \
+                -e "s|MARIADB_PASSWORD: .*|MARIADB_PASSWORD: \${ROMM_DB_PASSWORD}|" \
+                -e "s|MARIADB_ROOT_PASSWORD: .*|MARIADB_ROOT_PASSWORD: \${ROMM_DB_ROOT_PASSWORD}|" \
+                -e "s|IGDB_CLIENT_ID: .*|IGDB_CLIENT_ID: \${ROMM_IGDB_CLIENT_ID}|" \
+                -e "s|IGDB_CLIENT_SECRET: .*|IGDB_CLIENT_SECRET: \${ROMM_IGDB_CLIENT_SECRET}|"
+            ;;
+
         *)
             cat
             ;;

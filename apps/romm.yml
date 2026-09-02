@@ -1,0 +1,120 @@
+name: romm
+services:
+    romm:
+        command: null
+        container_name: romm
+        depends_on:
+            romm-db:
+                condition: service_healthy
+                restart: true
+                required: true
+        deploy:
+            resources:
+                limits:
+                    memory: 4GB
+                    cpus: "1.00"
+                reservations:
+                    memory: 512MB
+                    cpus: "0.00"
+            placement: {}
+        entrypoint: null
+        environment:
+            DB_HOST: romm-db
+            DB_NAME: romm
+            DB_PASSWD: ${ROMM_DB_PASSWORD}
+            DB_USER: romm-user
+            IGDB_CLIENT_ID: ${ROMM_IGDB_CLIENT_ID}
+            IGDB_CLIENT_SECRET: ${ROMM_IGDB_CLIENT_SECRET}
+            ROMM_AUTH_SECRET_KEY: ""
+            SCREENSCRAPER_PASSWORD: ""
+            SCREENSCRAPER_USER: ""
+            STEAMGRIDDB_API_KEY: ""
+        image: rommapp/romm:4.8.1@sha256:072c87742e974301cf3a08e5cef563e49a00be97233d80b4f1685d04f199038f
+        labels:
+            icon: https://cdn.jsdelivr.net/gh/IceWhaleTech/CasaOS-AppStore@gh-pages/apps/org.icewhale.romm/assets/icon.svg
+        networks:
+            - romm-network
+        ports:
+            - mode: ingress
+              target: 8080
+              published: "8285"
+              protocol: tcp
+        restart: unless-stopped
+        volumes:
+            - type: bind
+              source: ${DATA4TB_MOUNT}/romm/resources
+              target: /romm/resources
+            - type: bind
+              source: ${APPDATA_ROOT}/romm/redis-data
+              target: /redis-data
+            - type: bind
+              source: ${DATA4TB_MOUNT}/romm/library
+              target: /romm/library
+            - type: bind
+              source: ${DATA4TB_MOUNT}/romm/assets
+              target: /romm/assets
+            - type: bind
+              source: ${APPDATA_ROOT}/romm/config
+              target: /romm/config
+    romm-db:
+        command: null
+        container_name: romm-db
+        deploy:
+            resources:
+                limits:
+                    memory: 4GB
+                    cpus: "1.00"
+                reservations:
+                    memory: 256MB
+                    cpus: "0.00"
+            placement: {}
+        entrypoint: null
+        environment:
+            MARIADB_DATABASE: romm
+            MARIADB_PASSWORD: ${ROMM_DB_PASSWORD}
+            MARIADB_ROOT_PASSWORD: ${ROMM_DB_ROOT_PASSWORD}
+            MARIADB_USER: romm-user
+        healthcheck:
+            test:
+                - CMD
+                - healthcheck.sh
+                - --connect
+                - --innodb_initialized
+            timeout: 5s
+            interval: 10s
+            retries: 5
+            start_period: 30s
+            start_interval: 10s
+        image: mariadb:11.8.2@sha256:cc77bc4f4dfe94d1c0c5d0f2bc9133e7c8211944bdd3c06df2c84028eb269196
+        labels:
+            icon: https://cdn.jsdelivr.net/gh/IceWhaleTech/CasaOS-AppStore@gh-pages/apps/org.icewhale.romm/assets/icon.svg
+        networks:
+            - romm-network
+        restart: unless-stopped
+        volumes:
+            - type: bind
+              source: ${APPDATA_ROOT}/romm/mysql
+              target: /var/lib/mysql
+              bind:
+                create_host_path: true
+networks:
+    romm-network:
+        name: romm_romm-network
+        driver: bridge
+        ipam: {}
+        external: false
+x-casaos:
+    hostname: ""
+    icon: https://cdn.jsdelivr.net/gh/IceWhaleTech/CasaOS-AppStore@gh-pages/apps/org.icewhale.romm/assets/icon.svg
+    id: org.icewhale.romm
+    index: /
+    is_uncontrolled: false
+    main: romm
+    port_map: "8285"
+    repo_id: zimaos-appstore
+    scheme: http
+    store_app_id: romm
+    title:
+        custom: RomM
+        en_US: RomM
+    version: 4.8.1
