@@ -88,10 +88,13 @@ instead — one `<name>|<playlist url>` per line, public M3U playlists only
 (the file is committed) — and applied by the **Jellyfin Live TV** step of
 `setup.sh`.
 
-The step adds only the tuners whose URL isn't in `livetv.xml` yet (existing
-ones, including tuners added from the web UI, are left alone), backs up the
-file as `livetv.xml.bak-<timestamp>`, and restarts the `jellyfin` container
-around the edit, with sudo — the file belongs to the container user. It is
+The step matches tuners by name: a line whose name isn't in `livetv.xml`
+yet is added, and a tuner whose URL changed in `tuners.txt` is updated in
+place (tuners added from the web UI under other names are left alone). It
+backs up the file as `livetv.xml.bak-<timestamp>`, restarts the `jellyfin`
+container around the edit, with sudo — the file belongs to the container
+user — and, when `JELLYFIN_API_KEY` is set, starts the "Refresh Guide" task
+so the channel list updates right away. It is
 skipped while `livetv.xml` doesn't exist yet (Jellyfin writes it on its
 first start). To apply a new line without touching the other apps:
 
