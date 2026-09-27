@@ -1,5 +1,5 @@
 # Immich system config file, mounted read-only into immich-server via
-# IMMICH_CONFIG_FILE (see apps/immich.yml). Setting this env var makes
+# IMMICH_CONFIG_FILE (see compose/immich.yml). Setting this env var makes
 # Immich enforce every value below on each start and disables editing
 # ANY system setting from Administration > Settings in the web UI —
 # not just the ones listed here. Unlisted keys keep Immich's built-in

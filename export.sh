@@ -6,7 +6,7 @@ set -Eeuo pipefail
 # ZimaOS app export
 #
 # Snapshots every installed CasaOS/ZimaOS app into
-# apps/<name>.yml, replacing machine-specific paths and
+# steps/apps/compose/<name>.yml, replacing machine-specific paths and
 # secrets with the ${VARIABLES} defined in config.sh so
 # the result is safe to commit.
 #
@@ -18,70 +18,31 @@ set -Eeuo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly SCRIPT_DIR
 
-# Load configuration. All paths, addresses and secrets live in the
-# gitignored config.sh — nothing machine-specific is kept in the code.
-CONFIG_FILE="$SCRIPT_DIR/config.sh"
+# shellcheck source-path=SCRIPTDIR
 
-if [[ ! -f "$CONFIG_FILE" ]]; then
-    echo "❌ config.sh not found."
-    echo "   Copy config.sh.example to config.sh and fill in the values,"
-    echo "   or restore the filled-in copy from the Credentials folder."
-    exit 1
-fi
+source "$SCRIPT_DIR/lib/config.sh"
+source "$SCRIPT_DIR/lib/casaos.sh"
 
-# shellcheck source=/dev/null
-source "$CONFIG_FILE"
+load_config
 
-readonly APPS_DIR="$SCRIPT_DIR/apps"
-
-# Must match the same computation in setup.sh.
-readonly IMMICH_CONFIG_PATH="$SCRIPT_DIR/config/immich.yml"
-readonly API_URL_FILE="/var/run/casaos/app-management.url"
-
-# One folder per installed CasaOS app. This is the source of the app
-# names: the list endpoints of the API omit apps in some states (e.g.
-# vaultwarden while listed as unknown), and this folder never includes
-# the self-managed compose projects from /DATA/Projects.
-readonly APPS_STATE_DIR="/var/lib/casaos/apps"
-
-########################################
-# Configuration validation
-#
 # The reverse-templating rules only need the paths and
 # container environment values — the secret variables are
 # matched by key, not by value.
-########################################
-
-readonly REQUIRED_VARIABLES=(
-    APPDATA_ROOT
-    DATA4TB_MOUNT
-    IMMICH_GALLERY_DIR
-    NEXTCLOUD_DATA_DIR
-    JELLYFIN_MEDIA_DIR
-    QBITTORRENT_DOWNLOADS_DIR
-    SERVER_IP
-    TZ
-    PUID
+require_config_values \
+    APPDATA_ROOT \
+    DATA4TB_MOUNT \
+    IMMICH_GALLERY_DIR \
+    NEXTCLOUD_DATA_DIR \
+    JELLYFIN_MEDIA_DIR \
+    QBITTORRENT_DOWNLOADS_DIR \
+    SERVER_IP \
+    TZ \
+    PUID \
     PGID
-)
 
-MISSING_VARIABLES=()
-
-for variable in "${REQUIRED_VARIABLES[@]}"; do
-    if [[ -z "${!variable:-}" ]]; then
-        MISSING_VARIABLES+=("$variable")
-    fi
-done
-
-if [[ ${#MISSING_VARIABLES[@]} -gt 0 ]]; then
-    echo "❌ Missing values in config.sh:"
-    for variable in "${MISSING_VARIABLES[@]}"; do
-        echo "   $variable"
-    done
-    echo
-    echo "   See config.sh.example for the full list."
-    exit 1
-fi
+# Must match IMMICH_CONFIG_PATH in steps/apps/apps.sh.
+readonly IMMICH_CONFIG_PATH="$SCRIPT_DIR/steps/apps/immich-config.yml"
+readonly API_URL_FILE="/var/run/casaos/app-management.url"
 
 ########################################
 # Functions
@@ -167,7 +128,7 @@ main() {
     API_BASE_URL="$(cat "$API_URL_FILE")"
     readonly API_BASE_URL
 
-    mkdir -p "$APPS_DIR"
+    mkdir -p "$APPS_COMPOSE_DIR"
 
     local app_names
     app_names="$(ls "$APPS_STATE_DIR")"
@@ -184,19 +145,19 @@ main() {
             continue
         fi
 
-        template_app "$app_name" <<< "$compose_yaml" > "$APPS_DIR/$app_name.yml"
+        template_app "$app_name" <<< "$compose_yaml" > "$APPS_COMPOSE_DIR/$app_name.yml"
 
         echo "✅ $app_name"
         exported=$((exported + 1))
     done
 
     echo
-    echo "Exported $exported apps to apps/ ($skipped skipped)."
+    echo "Exported $exported apps to steps/apps/compose/ ($skipped skipped)."
 
     if command -v git > /dev/null && git -C "$SCRIPT_DIR" rev-parse 2>/dev/null; then
         echo
         echo "Changes:"
-        git -C "$SCRIPT_DIR" status --short "$APPS_DIR" || true
+        git -C "$SCRIPT_DIR" status --short "$APPS_COMPOSE_DIR" || true
         echo
         echo "⚠️ Review the diff before committing — a new app or a changed"
         echo "   value may contain a secret that still needs a variable in"

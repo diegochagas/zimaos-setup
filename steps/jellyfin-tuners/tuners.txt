@@ -1,4 +1,4 @@
-# Jellyfin Live TV M3U tuners, applied by jellyfin-tuners.sh.
+# Jellyfin Live TV M3U tuners, applied by the Jellyfin Live TV step (jellyfin-tuners.sh).
 #
 # One tuner per line: <name>|<playlist url>
 # Public playlists only — this file is committed, so never add

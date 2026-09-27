@@ -2,7 +2,7 @@
 
 ![Bash](https://img.shields.io/badge/Bash-5%2B-green)
 ![License](https://img.shields.io/github/license/diegochagas/zimaos-setup)
-![Version](https://img.shields.io/badge/version-1.0.0-blue)
+![Version](https://img.shields.io/badge/version-1.1.0-blue)
 
 Personal post-install setup for the ZimaOS home server. After a fresh
 ZimaOS installation it reinstalls every app with the exact customizations
@@ -27,7 +27,7 @@ This assumes ZimaOS is already installed and running — see
 [Not Covered by This Repository](#not-covered-by-this-repository) for
 the initial server setup this repo doesn't handle. Beyond ZimaOS's own
 hardware minimums for your board, sizing depends entirely on which apps
-from `apps/` you actually run — this repo makes no assumption about
+from `steps/apps/compose/` you actually run — this repo makes no assumption about
 that:
 
 | Resource | Minimum (light apps: Pi-hole, Vaultwarden, file serving) | Comfortable (full stack, incl. Immich/Jellyfin) |
@@ -38,8 +38,8 @@ that:
 | Network | LAN connectivity to pull Docker images | Static LAN IP/DNS reservation for `SERVER_IP` (see Not Covered) |
 
 This repo doesn't benchmark or enforce any of the above — `setup.sh`
-only checks that `casaos-cli` is present and `DATA4TB_MOUNT` is actually
-mounted before installing anything.
+only checks that the ZimaOS commands (`casaos-cli`, `docker`, ...) are
+present and `DATA4TB_MOUNT` is actually mounted before installing anything.
 
 ## How ZimaOS Installs Apps
 
@@ -55,7 +55,7 @@ available on the server:
   of every app, customizations included.
 
 This repository automates both directions: [export.sh](export.sh) snapshots
-the installed apps into [apps/](apps) with paths and secrets replaced by
+the installed apps into [steps/apps/compose/](steps/apps/compose) with paths and secrets replaced by
 variables, and [setup.sh](setup.sh) reinstalls them from those files with
 the values from `config.sh`.
 
@@ -65,7 +65,8 @@ Immich's storage template (Administration > Settings > Storage Template —
 how uploaded photos/videos are laid out on disk) lives in Immich's own
 database, not in a CasaOS compose customization, so it isn't captured by
 `export.sh`/`setup.sh` the way ports or volume paths are. It's pinned
-declaratively instead: [config/immich.yml](config/immich.yml) is mounted
+declaratively instead:
+[steps/apps/immich-config.yml](steps/apps/immich-config.yml) is mounted
 read-only into `immich-server` via `IMMICH_CONFIG_FILE`
 ([Immich docs](https://docs.immich.app/install/config-file/)), which makes
 Immich enforce it on every start.
@@ -73,7 +74,7 @@ Immich enforce it on every start.
 **Trade-off:** setting `IMMICH_CONFIG_FILE` makes Immich disable editing
 *any* system setting from the web UI, not just the storage template — the
 whole Administration > Settings section becomes read-only. To change the
-template (or add other settings), edit `config/immich.yml` and restart the
+template (or add other settings), edit `steps/apps/immich-config.yml` and restart the
 `immich-server` container; don't try to do it from the web UI while this
 file is mounted.
 
@@ -81,24 +82,26 @@ file is mounted.
 
 Jellyfin's Live TV tuners (Dashboard > Live TV > Tuner Devices) live in its
 `livetv.xml`, not in the compose file, so `export.sh` doesn't capture them.
-They're declared in [config/jellyfin-tuners.txt](config/jellyfin-tuners.txt)
+They're declared in
+[steps/jellyfin-tuners/tuners.txt](steps/jellyfin-tuners/tuners.txt)
 instead — one `<name>|<playlist url>` per line, public M3U playlists only
-(the file is committed) — and applied by
-[jellyfin-tuners.sh](jellyfin-tuners.sh):
+(the file is committed) — and applied by the **Jellyfin Live TV** step of
+`setup.sh`.
+
+The step adds only the tuners whose URL isn't in `livetv.xml` yet (existing
+ones, including tuners added from the web UI, are left alone), backs up the
+file as `livetv.xml.bak-<timestamp>`, and restarts the `jellyfin` container
+around the edit, with sudo — the file belongs to the container user. It is
+skipped while `livetv.xml` doesn't exist yet (Jellyfin writes it on its
+first start). To apply a new line without touching the other apps:
 
 ```bash
-sudo ./jellyfin-tuners.sh
+./setup.sh jellyfin
 ```
 
-It adds only the tuners whose URL isn't in `livetv.xml` yet (existing ones,
-including tuners added from the web UI, are left alone), backs up the file
-as `livetv.xml.bak-<timestamp>`, and restarts the `jellyfin` container
-around the edit. Root is needed because the file belongs to the container
-user. `--dry-run` lists what would be added without root.
-
 A tuner added from the web UI isn't written back to the list — add its
-line to `config/jellyfin-tuners.txt` too, or it won't come back on a clean
-install without a restored AppData backup.
+line to `tuners.txt` too, or it won't come back on a clean install without
+a restored AppData backup.
 
 ## Step 1 - Bootstrap SSH Access
 
@@ -156,19 +159,23 @@ scp ~/Nextcloud/Documents/Credentials/zimaos-setup__config.sh <user>@<server-ip>
 
 What it does:
 
-- Checks the environment: `casaos-cli` present (it must run on ZimaOS) and
-  the external drive mounted at `DATA4TB_MOUNT`.
+- Checks the environment: the ZimaOS commands present (it must run on the
+  server), sudo (asked once, up front) and the external drive mounted at
+  `DATA4TB_MOUNT`.
 - Registers the extra app stores from `config.sh` (by default the
   [big-bear-casaos](https://github.com/bigbeartechworld/big-bear-casaos)
   store), skipping the ones already registered.
-- For each file in `apps/`: skips it if the app is already installed,
-  otherwise substitutes the `config.sh` values into the compose file and
-  installs it with `casaos-cli app-management install`.
+- For each file in `steps/apps/compose/`: skips it if the app is already
+  installed, otherwise substitutes the `config.sh` values into the compose
+  file and installs it with `casaos-cli app-management install`.
+- Adds the [Jellyfin Live TV tuners](#jellyfin-live-tv-tuners) (skipped on
+  a fresh install, see Step 6).
 - Prints a summary and writes a log to `logs/`.
 
 Options: `--dry-run` validates every app through the CasaOS API without
 installing anything; passing app names (`./setup.sh jellyfin immich`)
-installs only those.
+runs only those apps (and the Jellyfin Live TV step only when `jellyfin`
+is among them).
 
 Installs continue in the background while ZimaOS pulls the images — watch
 the progress in the ZimaOS web UI.
@@ -186,10 +193,11 @@ no re-pairing is needed.
 
 Only needed when Jellyfin's AppData was **not** restored in Step 5 (a
 restore already brings `livetv.xml` back). Open Jellyfin once and finish
-its startup wizard so it writes `livetv.xml`, then:
+its startup wizard so it writes `livetv.xml`, then run the setup again —
+everything else is skipped as already installed:
 
 ```bash
-sudo ./jellyfin-tuners.sh
+./setup.sh jellyfin
 ```
 
 Channels show up after Jellyfin's "Refresh Guide" task runs (Dashboard >
@@ -202,12 +210,13 @@ After installing or reconfiguring apps in the ZimaOS web UI, refresh the
 snapshot on the server and commit:
 
 ```bash
-cd /DATA/Projects/zimaos-setup && ./export.sh && git add apps && git status
+cd /DATA/Projects/zimaos-setup && ./export.sh && git add steps/apps/compose && git status
 ```
 
 `export.sh` fetches the installed compose file of every CasaOS app from the
 local app-management API (no sudo needed), replaces the machine-specific
-paths and secrets with the `config.sh` variables and rewrites `apps/`.
+paths and secrets with the `config.sh` variables and rewrites
+`steps/apps/compose/`.
 Non-CasaOS containers (finances-tracker, homelab-monitor — plain compose
 projects in `/DATA/Projects`) are skipped; they have their own repositories.
 
@@ -239,6 +248,54 @@ filled-in copy):
 | `ROMM_IGDB_CLIENT_ID` / `ROMM_IGDB_CLIENT_SECRET` | IGDB API credentials RomM uses for game metadata scraping |
 | `EXTRA_APP_STORES` | Extra app stores to register (optional) |
 
+## Project Layout
+
+```text
+setup.sh            Entry point: loads config.sh, lib/ and steps/, then runs
+                    the steps in the order listed in run_setup_steps
+export.sh           Snapshots the installed apps into steps/apps/compose/
+config.sh.example   Template for the required config.sh
+lib/
+  config.sh         Loads config.sh and validates the required values
+                    (shared by setup.sh and export.sh)
+  log.sh            Terminal output and the log file
+  exec.sh           run (dry-run aware), root file writes, temporary
+                    directories and the error handler
+  step.sh           run_step, skip_step, warn_step, complete_step and
+                    the summary
+  casaos.sh         Installed-app queries and the app file list
+  preflight.sh      Command, sudo and external drive checks
+steps/              One setup step (install_* or configure_*) per file
+  <name>.sh         A step without extra files
+  <name>/<name>.sh  A step that ships files, kept in the same folder:
+  app-stores.sh     Registers EXTRA_APP_STORES
+  apps/             apps.sh, the exported compose/ files it installs and
+                    immich-config.yml (mounted into immich-server)
+  jellyfin-tuners/  jellyfin-tuners.sh and the tuners.txt it applies
+```
+
+Every step is a function that installs or configures one thing. It runs
+inside `run_step`, which prints the step header and records the result in
+the summary:
+
+- Return normally and the step is recorded as installed/configured.
+- Call `skip_step "reason"` when there is nothing to do (already installed,
+  not initialized yet, nothing configured).
+- Call `warn_step "reason"` when the step could not complete but the setup
+  should continue.
+- Call `complete_step "status"` to record a custom success status (e.g.
+  "Install started", "Validated").
+
+Every action that changes the server goes through `run` or
+`write_root_file`, which print the action and skip it in `--dry-run` mode.
+Any command that fails aborts the setup and reports its file and line.
+
+To add a step, create `steps/<name>.sh` with its function, `source` it in
+`setup.sh` and add a `run_step` line to `run_setup_steps` in the position
+where it should run. If the step ships files, put it in
+`steps/<name>/<name>.sh` with the files beside it and resolve them from
+`${BASH_SOURCE[0]%/*}`, as the Jellyfin Live TV step does.
+
 ## Not Covered by This Repository
 
 Settings that live outside CasaOS app management still need the ZimaOS web
@@ -262,7 +319,7 @@ UI after a reinstall:
 - The exported compose files pin images by digest, so a reinstall brings
   back the exact versions that were running. Update apps through the ZimaOS
   web UI and re-run `export.sh` afterwards.
-- `setup.sh` never uninstalls anything. Apps removed from `apps/` stay
+- `setup.sh` never uninstalls anything. Apps removed from `steps/apps/compose/` stay
   installed until removed in the web UI; delete the leftover `.yml`
   manually after uninstalling an app.
 - Immich's database password is internal to its compose network, but it
