@@ -63,6 +63,7 @@ source "$SCRIPT_DIR/steps/docker-dns.sh"
 source "$SCRIPT_DIR/steps/projects/projects.sh"
 source "$SCRIPT_DIR/steps/sudoers.sh"
 source "$SCRIPT_DIR/steps/jellyfin-tuners/jellyfin-tuners.sh"
+source "$SCRIPT_DIR/steps/jellyfin-livetv-logo/jellyfin-livetv-logo.sh"
 
 trap 'handle_error $? "${BASH_SOURCE[0]}" $LINENO "$BASH_COMMAND"' ERR
 trap 'cleanup_workspace' EXIT
@@ -181,6 +182,7 @@ run_setup_steps() {
 
     if app_selected jellyfin; then
         run_step configure "Jellyfin Live TV"     configure_jellyfin_tuners
+        run_step configure "Live TV Logo"         configure_jellyfin_livetv_logo
     fi
 }
 

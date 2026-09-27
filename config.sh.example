@@ -117,3 +117,14 @@ PROJECTS_DIR=""
 # step.
 #
 DOCKER_DNS_SERVERS=()
+
+#
+# Jellyfin API access for the Live TV Logo service, which
+# sets the Live TV tile's image to the logo of the last
+# channel watched. JELLYFIN_URL is Jellyfin's address as
+# seen from the server itself (e.g. localhost and its
+# published port); create the key in Jellyfin under
+# Dashboard > API Keys. Leave either empty to skip the step.
+#
+JELLYFIN_URL=""
+JELLYFIN_API_KEY=""

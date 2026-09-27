@@ -103,6 +103,23 @@ A tuner added from the web UI isn't written back to the list — add its
 line to `tuners.txt` too, or it won't come back on a clean install without
 a restored AppData backup.
 
+## Live TV Tile Logo
+
+The Live TV tile on Jellyfin's home screen (My Media) shows the logo of the
+last channel watched. [livetv-logo.sh](steps/jellyfin-livetv-logo/livetv-logo.sh)
+runs as the `jellyfin-livetv-logo` systemd service: every 10 seconds it
+reads Jellyfin's sessions, and when a channel stops playing (stopped, or
+switched to another channel) it uploads that channel's logo as the Live TV
+view's image, the same as *Edit images* in the web UI. It works in every
+Jellyfin client, since the image is stored by Jellyfin itself.
+
+It only talks to Jellyfin's API, with `JELLYFIN_URL` and `JELLYFIN_API_KEY`
+from `config.sh` (create the key under Dashboard > API Keys). Logs:
+
+```bash
+journalctl -u jellyfin-livetv-logo -f
+```
+
 ## Step 1 - Bootstrap SSH Access
 
 On a fresh installation, create the user in the ZimaOS web UI first, then
@@ -190,7 +207,8 @@ What it does:
 - Enables homelab-backup's server-side backup timer through its own
   `zimaos/install-timer.sh` (needs its restored `zimaos/config.sh`).
 - Adds the [Jellyfin Live TV tuners](#jellyfin-live-tv-tuners) (skipped on
-  a fresh install, see Step 6).
+  a fresh install, see Step 6) and installs the
+  [Live TV tile logo](#live-tv-tile-logo) service.
 - Prints a summary and writes a log to `logs/`.
 
 Options: `--dry-run` validates every app through the CasaOS API without
@@ -276,6 +294,7 @@ filled-in copy):
 | `EXTRA_APP_STORES` | Extra app stores to register (optional) |
 | `PROJECTS_DIR` | Where the self-managed projects are cloned (optional) |
 | `DOCKER_DNS_SERVERS` | DNS servers for Docker's daemon.json (optional) |
+| `JELLYFIN_URL` / `JELLYFIN_API_KEY` | Jellyfin API access for the Live TV tile logo service (optional) |
 
 ## Project Layout
 
@@ -306,6 +325,9 @@ steps/              One setup step (install_* or configure_*) per file
   projects/         projects.sh (clone, push-to-deploy, stacks, backup
                     timer), projects.txt and the post-receive hook
   jellyfin-tuners/  jellyfin-tuners.sh and the tuners.txt it applies
+  jellyfin-livetv-logo/
+                    jellyfin-livetv-logo.sh (installs the systemd service)
+                    and the livetv-logo.sh it runs
 ```
 
 Every step is a function that installs or configures one thing. It runs
