@@ -58,6 +58,10 @@ source "$SCRIPT_DIR/lib/preflight.sh"
 
 source "$SCRIPT_DIR/steps/app-stores.sh"
 source "$SCRIPT_DIR/steps/apps/apps.sh"
+source "$SCRIPT_DIR/steps/withoutbg/withoutbg.sh"
+source "$SCRIPT_DIR/steps/docker-dns.sh"
+source "$SCRIPT_DIR/steps/projects/projects.sh"
+source "$SCRIPT_DIR/steps/sudoers.sh"
 source "$SCRIPT_DIR/steps/jellyfin-tuners/jellyfin-tuners.sh"
 
 trap 'handle_error $? "${BASH_SOURCE[0]}" $LINENO "$BASH_COMMAND"' ERR
@@ -84,7 +88,8 @@ Options:
 
 Arguments:
     app                 Only install the given apps (file names
-                        in steps/apps/compose, without .yml).
+                        in steps/apps/compose, without .yml),
+                        skipping the server-wide steps.
 
 Examples:
     ./setup.sh
@@ -163,8 +168,19 @@ run_setup_steps() {
         run_step install "$app_name"         install_app "$app_name"
     done
 
+    # Server-wide steps only run on a full setup, not when
+    # installing selected apps.
+    if (( ${#SELECTED_APPS[@]} == 0 )); then
+        run_step install   "withoutBG"            install_withoutbg
+        run_step configure "Docker DNS"           configure_docker_dns
+        run_step configure "Projects"             configure_projects
+        run_step configure "Project Stacks"       configure_project_stacks
+        run_step configure "Sudoers Rules"        configure_sudoers
+        run_step configure "Homelab Backup Timer" configure_homelab_backup_timer
+    fi
+
     if app_selected jellyfin; then
-        run_step configure "Jellyfin Live TV" configure_jellyfin_tuners
+        run_step configure "Jellyfin Live TV"     configure_jellyfin_tuners
     fi
 }
 

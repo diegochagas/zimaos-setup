@@ -99,3 +99,21 @@ ROMM_IGDB_CLIENT_SECRET=""
 EXTRA_APP_STORES=(
     "https://github.com/bigbeartechworld/big-bear-casaos/archive/refs/heads/master.zip"
 )
+
+#
+# Folder where the self-managed projects from
+# steps/projects/projects.txt are cloned (finances-tracker,
+# homelab-monitor, ...), e.g. a Projects folder next to the
+# app data. Leave empty to skip the Projects, Project Stacks
+# and Homelab Backup Timer steps and the deploy sudoers rule.
+#
+PROJECTS_DIR=""
+
+#
+# DNS servers written to Docker's daemon.json, one per
+# array entry. Needed when the host resolves through a
+# Pi-hole container, which doesn't answer Docker build
+# networks. Leave the array empty to skip the Docker DNS
+# step.
+#
+DOCKER_DNS_SERVERS=()

@@ -10,6 +10,8 @@ readonly REQUIRED_COMMANDS=(
     envsubst
     mountpoint
     docker
+    git
+    jq
     sudo
 )
 

@@ -1,0 +1,26 @@
+# withoutBG open-weights v3 (CPU), self-hosted background removal.
+# https://withoutbg.com/open-model — Apache-2.0 images, no persistent data.
+#
+# - withoutbg-service: the HTTP API (/health, /v1/remove-background) the
+#   GIMP plug-in from gimp-setup calls (its WITHOUTBG_SERVER_URL).
+# - withoutbg: the web editor.
+#
+# Container names match the ones originally started with `docker run`, so
+# the setup recognizes an existing install.
+name: withoutbg
+services:
+  withoutbg-service:
+    container_name: withoutbg-service
+    image: withoutbg/withoutbg-openweights-v3-service-cpu:latest
+    restart: unless-stopped
+    network_mode: bridge
+    ports:
+      - "8000:8000"
+
+  withoutbg:
+    container_name: withoutbg
+    image: withoutbg/withoutbg-openweights-v3-app-cpu:latest
+    restart: unless-stopped
+    network_mode: bridge
+    ports:
+      - "8080:8080"

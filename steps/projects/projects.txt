@@ -1,0 +1,10 @@
+# Self-managed projects cloned into PROJECTS_DIR by the Projects step.
+#
+# One project per line: <folder name>|<git clone url>
+# Each clone accepts pushes from the workstation (push-to-deploy, see
+# post-receive). A project with a docker-compose.yml is also started by
+# the Project Stacks step once its gitignored env files are restored.
+finances-tracker|git@github.com:diegochagas/finances-tracker.git
+homelab-backup|git@github.com:diegochagas/homelab-backup.git
+homelab-monitor|https://github.com/diegochagas/homelab-monitor.git
+zimaos-setup|git@github.com:diegochagas/zimaos-setup.git

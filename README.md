@@ -168,14 +168,37 @@ What it does:
 - For each file in `steps/apps/compose/`: skips it if the app is already
   installed, otherwise substitutes the `config.sh` values into the compose
   file and installs it with `casaos-cli app-management install`.
+- Starts [withoutBG](steps/withoutbg/docker-compose.yml) — the
+  background-removal API (`:8000`) and web editor (`:8080`) used by the
+  GIMP plug-in from gimp-setup — as a plain compose project.
+- Sets Docker's DNS servers (`DOCKER_DNS_SERVERS`) in
+  `/etc/docker/daemon.json`: the host resolves through the Pi-hole
+  container, which doesn't answer Docker build networks.
+- Clones the self-managed projects in
+  [steps/projects/projects.txt](steps/projects/projects.txt) into
+  `PROJECTS_DIR` and sets them up for push-to-deploy
+  (`receive.denyCurrentBranch=updateInstead` plus the
+  [post-receive](steps/projects/post-receive) hook that rebuilds a compose
+  stack on `git push` from the workstation).
+- Starts the compose stacks of those projects (finances-tracker,
+  homelab-monitor) once their gitignored env files are back — on a fresh
+  install that's after Step 5, so run the setup again then.
+- Installs the sudoers rules in `/etc/sudoers.d/<user>-*`, checked with
+  `visudo`: passwordless `rsync` for homelab-backup's pulls, and
+  `docker compose ... up -d --build` for exactly the projects' compose files
+  (used by the deploy hook).
+- Enables homelab-backup's server-side backup timer through its own
+  `zimaos/install-timer.sh` (needs its restored `zimaos/config.sh`).
 - Adds the [Jellyfin Live TV tuners](#jellyfin-live-tv-tuners) (skipped on
   a fresh install, see Step 6).
 - Prints a summary and writes a log to `logs/`.
 
 Options: `--dry-run` validates every app through the CasaOS API without
-installing anything; passing app names (`./setup.sh jellyfin immich`)
-runs only those apps (and the Jellyfin Live TV step only when `jellyfin`
-is among them).
+installing anything (steps whose checks need root — withoutBG, Project
+Stacks, Sudoers Rules — are reported as not checked); passing app names
+(`./setup.sh jellyfin immich`) runs only those apps, skipping the
+server-wide steps (and the Jellyfin Live TV step unless `jellyfin` is
+among them).
 
 Installs continue in the background while ZimaOS pulls the images — watch
 the progress in the ZimaOS web UI.
@@ -188,6 +211,10 @@ the workstation backup with
 then restart the apps. Tailscale login, the Cloudflared tunnel token and
 Vaultwarden's admin token all live inside the restored AppData folders, so
 no re-pairing is needed.
+
+The backup also holds the projects' gitignored env files
+(`Backups/Projects`). Once they are back in `PROJECTS_DIR`, run
+`./setup.sh` again to start the project stacks and the backup timer.
 
 ## Step 6 - Jellyfin Live TV
 
@@ -247,6 +274,8 @@ filled-in copy):
 | `ROMM_DB_ROOT_PASSWORD` | RomM's MariaDB root password |
 | `ROMM_IGDB_CLIENT_ID` / `ROMM_IGDB_CLIENT_SECRET` | IGDB API credentials RomM uses for game metadata scraping |
 | `EXTRA_APP_STORES` | Extra app stores to register (optional) |
+| `PROJECTS_DIR` | Where the self-managed projects are cloned (optional) |
+| `DOCKER_DNS_SERVERS` | DNS servers for Docker's daemon.json (optional) |
 
 ## Project Layout
 
@@ -269,8 +298,13 @@ steps/              One setup step (install_* or configure_*) per file
   <name>.sh         A step without extra files
   <name>/<name>.sh  A step that ships files, kept in the same folder:
   app-stores.sh     Registers EXTRA_APP_STORES
+  docker-dns.sh     Docker daemon DNS servers
+  sudoers.sh        Backup and deploy sudoers rules
   apps/             apps.sh, the exported compose/ files it installs and
                     immich-config.yml (mounted into immich-server)
+  withoutbg/        withoutbg.sh and its docker-compose.yml
+  projects/         projects.sh (clone, push-to-deploy, stacks, backup
+                    timer), projects.txt and the post-receive hook
   jellyfin-tuners/  jellyfin-tuners.sh and the tuners.txt it applies
 ```
 
@@ -285,6 +319,8 @@ the summary:
   should continue.
 - Call `complete_step "status"` to record a custom success status (e.g.
   "Install started", "Validated").
+- Use `skip_in_dry_run_without_sudo || return 0` in a step whose checks
+  need root, since dry-run doesn't ask for the sudo password.
 
 Every action that changes the server goes through `run` or
 `write_root_file`, which print the action and skip it in `--dry-run` mode.
@@ -298,28 +334,24 @@ where it should run. If the step ships files, put it in
 
 ## Not Covered by This Repository
 
-Settings that live outside CasaOS app management still need the ZimaOS web
-UI after a reinstall:
+These still need manual work after a reinstall, mostly in the ZimaOS web
+UI:
 
 - Creating the ZimaOS user account and enabling SSH (Step 1).
 - Network configuration and the router's static IP/DNS reservation.
 - Storage layout: adopting the internal data partition and the external
   drives (`DATA4TB`, `BACKUP4TB`).
-- Samba shares of the `DATA4TB` folders.
-- The sudoers rule for remote backups and the root systemd backup timer —
-  both handled by
-  [homelab-backup](https://github.com/diegochagas/homelab-backup)
-  (`zimaos/install-timer.sh`).
-- Non-CasaOS compose projects in `/DATA/Projects`
-  (finances-tracker, homelab-monitor) — clone and start them from their own
-  repositories.
+- Samba shares of the `ZimaOS-HD`, `DATA4TB` and `BACKUP4TB` drives.
+- The projects' gitignored secrets (env files, homelab-backup's
+  `zimaos/config.sh`) — they come back with the backup restore (Step 5).
 
 ## Notes
 
 - The exported compose files pin images by digest, so a reinstall brings
   back the exact versions that were running. Update apps through the ZimaOS
   web UI and re-run `export.sh` afterwards.
-- `setup.sh` never uninstalls anything. Apps removed from `steps/apps/compose/` stay
+- `setup.sh` never uninstalls anything. Apps removed from
+  `steps/apps/compose/` stay
   installed until removed in the web UI; delete the leftover `.yml`
   manually after uninstalling an app.
 - Immich's database password is internal to its compose network, but it

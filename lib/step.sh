@@ -52,6 +52,18 @@ warn_step() {
     CURRENT_STEP_STATUS="⚠️ $1"
 }
 
+# Skips the current step in dry-run mode: its checks need
+# root (docker, root-only files) and dry-run doesn't ask for
+# the sudo password. Use as:
+#
+#   skip_in_dry_run_without_sudo || return 0
+skip_in_dry_run_without_sudo() {
+    if is_dry_run; then
+        skip_step "Needs sudo — not checked in dry-run"
+        return 1
+    fi
+}
+
 # Records the current step as done, with a custom status.
 complete_step() {
     print_info "✅ $1"

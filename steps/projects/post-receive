@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# Push-to-deploy: runs after a push from the workstation has updated this
+# checkout (receive.denyCurrentBranch=updateInstead). Rebuilds the compose
+# stack when the repo has one; passwordless sudo for exactly that command
+# comes from /etc/sudoers.d/<user>-deploy (zimaos-setup's
+# Sudoers Rules step).
+set -uo pipefail
+repo_dir="$(cd "$(git rev-parse --git-dir)/.." && pwd)"
+unset GIT_DIR
+
+while read -r _old new ref; do
+    [[ "$ref" == "refs/heads/main" ]] || continue
+    # Keep `git status` on the server from reporting "ahead of origin".
+    git -C "$repo_dir" update-ref refs/remotes/origin/main "$new"
+    echo "zimaos: $(basename "$repo_dir") updated to $(git -C "$repo_dir" log -1 --format='%h %s' "$new")"
+
+    compose="$repo_dir/docker-compose.yml"
+    if [[ -f "$compose" ]]; then
+        echo "zimaos: rebuilding containers (docker compose up -d --build)..."
+        if sudo -n /usr/bin/docker compose -f "$compose" up -d --build 2>&1; then
+            echo "zimaos: ✅ deployed"
+        else
+            echo "zimaos: ❌ deploy failed (code is updated, containers are not)"
+            exit 1
+        fi
+    fi
+done
