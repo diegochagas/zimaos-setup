@@ -84,28 +84,47 @@ insert_jellyfin_tuners() {
     ' "$1"
 }
 
-# Prints livetv.xml with the Url of the tuner named $2
-# replaced by $3 (both XML-escaped).
+# Prints livetv.xml with one field of a tuner replaced: the
+# tuner whose <$2> is $3 gets <$4> set to $5 (values
+# XML-escaped).
 #
 # Arguments:
 #   $1 - livetv.xml path
-#   $2 - Friendly name
-#   $3 - New playlist URL
-update_jellyfin_tuner_url() {
-    TUNER_NAME="$2" TUNER_URL="$3" awk '
+#   $2 - Tag to match (Url or FriendlyName)
+#   $3 - Value to match
+#   $4 - Tag to set
+#   $5 - New value
+update_jellyfin_tuner() {
+    MATCH_TAG="$2" MATCH_VALUE="$3" SET_TAG="$4" SET_VALUE="$5" awk '
         /<TunerHostInfo>/ { in_block = 1; block = "" }
         in_block {
             block = block $0 "\n"
             if ($0 ~ /<\/TunerHostInfo>/) {
                 in_block = 0
-                if (index(block, "<FriendlyName>" ENVIRON["TUNER_NAME"] "</FriendlyName>")) {
-                    sub(/<Url>[^<]*<\/Url>/, "<Url>" ENVIRON["TUNER_URL"] "</Url>", block)
+                match_tag = ENVIRON["MATCH_TAG"]
+                set_tag = ENVIRON["SET_TAG"]
+                if (index(block, "<" match_tag ">" ENVIRON["MATCH_VALUE"] "</" match_tag ">")) {
+                    start = index(block, "<" set_tag ">")
+                    end = index(block, "</" set_tag ">")
+                    if (start && end > start) {
+                        block = substr(block, 1, start - 1) "<" set_tag ">" ENVIRON["SET_VALUE"] substr(block, end)
+                    }
                 }
                 printf "%s", block
             }
             next
         }
         { print }
+    ' "$1"
+}
+
+# Prints the name of the tuner with this (XML-escaped) URL.
+jellyfin_tuner_name_for_url() {
+    TUNER_URL="$2" awk '
+        /<TunerHostInfo>/ { url = ""; name = "" }
+        /<Url>/ { url = $0; sub(/.*<Url>/, "", url); sub(/<\/Url>.*/, "", url) }
+        /<FriendlyName>/ { name = $0; sub(/.*<FriendlyName>/, "", name); sub(/<\/FriendlyName>.*/, "", name) }
+        /<\/TunerHostInfo>/ && url == ENVIRON["TUNER_URL"] { print name; exit }
     ' "$1"
 }
 
@@ -184,16 +203,21 @@ configure_jellyfin_tuners() {
         escaped_name="$(xml_escape "$name")"
         escaped_url="$(xml_escape "$url")"
 
+        # A tuner is matched by URL, then by name, so changing
+        # either one in tuners.txt updates the tuner instead of
+        # adding a second one.
         if grep -qF "<Url>$escaped_url</Url>" "$updated_xml"; then
-            print_info "⏭️ Already present: $name"
-            continue
-        fi
+            if [[ "$(jellyfin_tuner_name_for_url "$updated_xml" "$escaped_url")" == "$escaped_name" ]]; then
+                print_info "⏭️ Already present: $name"
+                continue
+            fi
 
-        # A tuner is matched by name, so changing its URL in
-        # tuners.txt updates it instead of adding a second one.
-        if grep -qF "<FriendlyName>$escaped_name</FriendlyName>" "$updated_xml"; then
+            print_info "➜ Renaming tuner to: $name ($url)"
+            update_jellyfin_tuner "$updated_xml" Url "$escaped_url" FriendlyName "$escaped_name" > "$work_dir/next.xml"
+            mv "$work_dir/next.xml" "$updated_xml"
+        elif grep -qF "<FriendlyName>$escaped_name</FriendlyName>" "$updated_xml"; then
             print_info "➜ Updating tuner URL: $name ($url)"
-            update_jellyfin_tuner_url "$updated_xml" "$escaped_name" "$escaped_url" > "$work_dir/next.xml"
+            update_jellyfin_tuner "$updated_xml" FriendlyName "$escaped_name" Url "$escaped_url" > "$work_dir/next.xml"
             mv "$work_dir/next.xml" "$updated_xml"
         else
             print_info "➜ Adding tuner: $name ($url)"
