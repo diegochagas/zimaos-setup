@@ -62,6 +62,7 @@ source "$SCRIPT_DIR/steps/withoutbg/withoutbg.sh"
 source "$SCRIPT_DIR/steps/docker-dns.sh"
 source "$SCRIPT_DIR/steps/projects/projects.sh"
 source "$SCRIPT_DIR/steps/sudoers.sh"
+source "$SCRIPT_DIR/steps/tailscale-serve/tailscale-serve.sh"
 source "$SCRIPT_DIR/steps/jellyfin-tuners/jellyfin-tuners.sh"
 source "$SCRIPT_DIR/steps/jellyfin-livetv-logo/jellyfin-livetv-logo.sh"
 
@@ -178,6 +179,7 @@ run_setup_steps() {
         run_step configure "Project Stacks"       configure_project_stacks
         run_step configure "Sudoers Rules"        configure_sudoers
         run_step configure "Homelab Backup Timer" configure_homelab_backup_timer
+        run_step configure "Tailscale HTTPS"      configure_tailscale_serve
     fi
 
     if app_selected jellyfin; then

@@ -1,0 +1,17 @@
+# HTTPS addresses published inside the tailnet, applied by the
+# Tailscale HTTPS step (tailscale-serve.sh).
+#
+# One rule per line: <https port>|<app>
+#
+# <https port>  Port of the server's Tailscale address. Tailscale
+#               serves HTTPS on 443, 8443 and 10000 only.
+# <app>         App file name in steps/apps/compose, without .yml.
+#               The rule forwards to the app's Web UI port
+#               (x-casaos port_map in that file).
+#
+# Vaultwarden: browsers and the Bitwarden apps refuse a vault
+# served over plain HTTP.
+443|vaultwarden
+# RomM: the web player's PSP and MS-DOS cores need threads,
+# which browsers only allow on a secure page.
+8443|romm

@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+#
+# The gate: lints every script and runs the tests. Run by the
+# pre-push hook (git config core.hooksPath .githooks), so a
+# push that fails it never reaches the server.
+#
+
+set -Eeuo pipefail
+
+cd "$(dirname "${BASH_SOURCE[0]}")/.."
+
+if ! command -v shellcheck > /dev/null 2>&1; then
+    echo "❌ shellcheck is not installed." >&2
+    exit 1
+fi
+
+echo "▶ shellcheck"
+
+mapfile -t scripts < <(
+    git ls-files --cached --others --exclude-standard |
+        while read -r file; do
+            [[ -f "$file" ]] || continue
+            if [[ "$file" == *.sh ]] || head -n 1 "$file" | grep -q '^#!.*\bbash\b'; then
+                echo "$file"
+            fi
+        done
+)
+
+shellcheck -x "${scripts[@]}"
+
+echo "  ✅ ${#scripts[@]} scripts"
+
+for test_file in tests/*.test.sh; do
+    echo
+    echo "▶ $test_file"
+    bash "$test_file"
+done
+
+echo
+echo "✅ All checks passed"

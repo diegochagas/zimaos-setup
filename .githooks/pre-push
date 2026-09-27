@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+#
+# Runs the gate before every push. Enable once per clone:
+#
+#   git config core.hooksPath .githooks
+#
+
+exec "$(git rev-parse --show-toplevel)/scripts/check"

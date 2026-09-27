@@ -123,6 +123,41 @@ from `config.sh` (create the key under Dashboard > API Keys). Logs:
 journalctl -u jellyfin-livetv-logo -f
 ```
 
+## Tailscale HTTPS
+
+The apps answer on the LAN address over plain HTTP, and some only work on a
+secure page: Vaultwarden's web vault and the Bitwarden clients, and RomM's
+web player for the cores that need threads (PSP, MS-DOS — the player shows
+"Error for site owner" on an HTTP address). The **Tailscale HTTPS** step of
+`setup.sh` publishes them with `tailscale serve`, at the server's Tailscale
+name, reachable only from devices in the tailnet. Tailscale issues and
+renews the certificates.
+
+The addresses are declared in
+[steps/tailscale-serve/serve.txt](steps/tailscale-serve/serve.txt), one
+`<https port>|<app>` per line. The port each rule forwards to is the app's
+Web UI port, read from its file in `steps/apps/compose/`:
+
+| Address | App |
+| ------- | --- |
+| `https://<server>.<tailnet>.ts.net` | Vaultwarden |
+| `https://<server>.<tailnet>.ts.net:8443` | RomM |
+
+Tailscale serves HTTPS on ports 443, 8443 and 10000 only, so three apps at
+most. The step adds the rules that are missing and leaves every other rule
+alone; removing a line from `serve.txt` doesn't unpublish the address. To
+do that by hand:
+
+```bash
+sudo docker exec tailscale tailscale serve --https=<https port> off
+```
+
+The step is skipped while Tailscale isn't running or logged in (open its
+Web UI on port 5252), and for apps that aren't installed. It needs HTTPS
+certificates enabled for the tailnet (Tailscale admin console > DNS). The
+rules are kept in Tailscale's state, so a restored AppData backup brings
+them back too.
+
 ## Step 1 - Bootstrap SSH Access
 
 On a fresh installation, create the user in the ZimaOS web UI first, then
@@ -209,6 +244,8 @@ What it does:
   (used by the deploy hook).
 - Enables homelab-backup's server-side backup timer through its own
   `zimaos/install-timer.sh` (needs its restored `zimaos/config.sh`).
+- Publishes the [Tailscale HTTPS](#tailscale-https) addresses of
+  Vaultwarden and RomM (skipped until Tailscale is logged in).
 - Adds the [Jellyfin Live TV tuners](#jellyfin-live-tv-tuners) (skipped on
   a fresh install, see Step 6) and installs the
   [Live TV tile logo](#live-tv-tile-logo) service.
@@ -216,10 +253,10 @@ What it does:
 
 Options: `--dry-run` validates every app through the CasaOS API without
 installing anything (steps whose checks need root — withoutBG, Project
-Stacks, Sudoers Rules — are reported as not checked); passing app names
-(`./setup.sh jellyfin immich`) runs only those apps, skipping the
-server-wide steps (and the Jellyfin Live TV step unless `jellyfin` is
-among them).
+Stacks, Sudoers Rules, Tailscale HTTPS — are reported as not checked);
+passing app names (`./setup.sh jellyfin immich`) runs only those apps,
+skipping the server-wide steps (and the Jellyfin Live TV step unless
+`jellyfin` is among them).
 
 Installs continue in the background while ZimaOS pulls the images — watch
 the progress in the ZimaOS web UI.
@@ -327,10 +364,14 @@ steps/              One setup step (install_* or configure_*) per file
   withoutbg/        withoutbg.sh and its docker-compose.yml
   projects/         projects.sh (clone, push-to-deploy, stacks, backup
                     timer), projects.txt and the post-receive hook
+  tailscale-serve/  tailscale-serve.sh and the serve.txt it applies
   jellyfin-tuners/  jellyfin-tuners.sh and the tuners.txt it applies
   jellyfin-livetv-logo/
                     jellyfin-livetv-logo.sh (installs the systemd service)
                     and the livetv-logo.sh it runs
+scripts/check       The gate: shellcheck on every script, then the tests
+tests/              <name>.test.sh files and lib.sh, the test runner
+.githooks/pre-push  Runs scripts/check before every push
 ```
 
 Every step is a function that installs or configures one thing. It runs
@@ -356,6 +397,22 @@ To add a step, create `steps/<name>.sh` with its function, `source` it in
 where it should run. If the step ships files, put it in
 `steps/<name>/<name>.sh` with the files beside it and resolve them from
 `${BASH_SOURCE[0]%/*}`, as the Jellyfin Live TV step does.
+
+## Tests
+
+```bash
+scripts/check
+```
+
+Lints every script with `shellcheck` and runs the tests in `tests/`, which
+need nothing but bash and `jq`. The tests never touch the server: a step's
+calls to `sudo` are answered by a fake, which records the changes the step
+asks for. To run the gate before every push, enable the hook once per
+clone:
+
+```bash
+git config core.hooksPath .githooks
+```
 
 ## Not Covered by This Repository
 
