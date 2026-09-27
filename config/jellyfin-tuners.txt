@@ -1,0 +1,7 @@
+# Jellyfin Live TV M3U tuners, applied by jellyfin-tuners.sh.
+#
+# One tuner per line: <name>|<playlist url>
+# Public playlists only — this file is committed, so never add
+# a URL that carries a login (e.g. Xtream get.php?username=...).
+iptv-org Brasil|https://iptv-org.github.io/iptv/countries/br.m3u
+Free-TV|https://raw.githubusercontent.com/Free-TV/IPTV/master/playlist.m3u8

@@ -77,6 +77,29 @@ template (or add other settings), edit `config/immich.yml` and restart the
 `immich-server` container; don't try to do it from the web UI while this
 file is mounted.
 
+## Jellyfin Live TV Tuners
+
+Jellyfin's Live TV tuners (Dashboard > Live TV > Tuner Devices) live in its
+`livetv.xml`, not in the compose file, so `export.sh` doesn't capture them.
+They're declared in [config/jellyfin-tuners.txt](config/jellyfin-tuners.txt)
+instead — one `<name>|<playlist url>` per line, public M3U playlists only
+(the file is committed) — and applied by
+[jellyfin-tuners.sh](jellyfin-tuners.sh):
+
+```bash
+sudo ./jellyfin-tuners.sh
+```
+
+It adds only the tuners whose URL isn't in `livetv.xml` yet (existing ones,
+including tuners added from the web UI, are left alone), backs up the file
+as `livetv.xml.bak-<timestamp>`, and restarts the `jellyfin` container
+around the edit. Root is needed because the file belongs to the container
+user. `--dry-run` lists what would be added without root.
+
+A tuner added from the web UI isn't written back to the list — add its
+line to `config/jellyfin-tuners.txt` too, or it won't come back on a clean
+install without a restored AppData backup.
+
 ## Step 1 - Bootstrap SSH Access
 
 On a fresh installation, create the user in the ZimaOS web UI first, then
@@ -158,6 +181,20 @@ the workstation backup with
 then restart the apps. Tailscale login, the Cloudflared tunnel token and
 Vaultwarden's admin token all live inside the restored AppData folders, so
 no re-pairing is needed.
+
+## Step 6 - Jellyfin Live TV
+
+Only needed when Jellyfin's AppData was **not** restored in Step 5 (a
+restore already brings `livetv.xml` back). Open Jellyfin once and finish
+its startup wizard so it writes `livetv.xml`, then:
+
+```bash
+sudo ./jellyfin-tuners.sh
+```
+
+Channels show up after Jellyfin's "Refresh Guide" task runs (Dashboard >
+Scheduled Tasks — run it by hand to skip the wait). See
+[Jellyfin Live TV Tuners](#jellyfin-live-tv-tuners).
 
 ## Keeping the Export in Sync
 
