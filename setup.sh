@@ -58,7 +58,6 @@ source "$SCRIPT_DIR/lib/preflight.sh"
 
 source "$SCRIPT_DIR/steps/app-stores.sh"
 source "$SCRIPT_DIR/steps/apps/apps.sh"
-source "$SCRIPT_DIR/steps/withoutbg/withoutbg.sh"
 source "$SCRIPT_DIR/steps/docker-dns.sh"
 source "$SCRIPT_DIR/steps/projects/projects.sh"
 source "$SCRIPT_DIR/steps/sudoers.sh"
@@ -173,7 +172,6 @@ run_setup_steps() {
     # Server-wide steps only run on a full setup, not when
     # installing selected apps.
     if (( ${#SELECTED_APPS[@]} == 0 )); then
-        run_step install   "withoutBG"            install_withoutbg
         run_step configure "Docker DNS"           configure_docker_dns
         run_step configure "Projects"             configure_projects
         run_step configure "Project Stacks"       configure_project_stacks
