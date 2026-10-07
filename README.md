@@ -223,9 +223,6 @@ What it does:
 - For each file in `steps/apps/compose/`: skips it if the app is already
   installed, otherwise substitutes the `config.sh` values into the compose
   file and installs it with `casaos-cli app-management install`.
-- Starts [withoutBG](steps/withoutbg/docker-compose.yml) — the
-  background-removal API (`:8000`) and web editor (`:8080`) used by the
-  GIMP plug-in from gimp-setup — as a plain compose project.
 - Sets Docker's DNS servers (`DOCKER_DNS_SERVERS`) in
   `/etc/docker/daemon.json`: the host resolves through the Pi-hole
   container, which doesn't answer Docker build networks.
@@ -252,8 +249,8 @@ What it does:
 - Prints a summary and writes a log to `logs/`.
 
 Options: `--dry-run` validates every app through the CasaOS API without
-installing anything (steps whose checks need root — withoutBG, Project
-Stacks, Sudoers Rules, Tailscale HTTPS — are reported as not checked);
+installing anything (steps whose checks need root — Project Stacks,
+Sudoers Rules, Tailscale HTTPS — are reported as not checked);
 passing app names (`./setup.sh jellyfin immich`) runs only those apps,
 skipping the server-wide steps (and the Jellyfin Live TV step unless
 `jellyfin` is among them).
@@ -361,7 +358,6 @@ steps/              One setup step (install_* or configure_*) per file
   sudoers.sh        Backup and deploy sudoers rules
   apps/             apps.sh, the exported compose/ files it installs and
                     immich-config.yml (mounted into immich-server)
-  withoutbg/        withoutbg.sh and its docker-compose.yml
   projects/         projects.sh (clone, push-to-deploy, stacks, backup
                     timer), projects.txt and the post-receive hook
   tailscale-serve/  tailscale-serve.sh and the serve.txt it applies
