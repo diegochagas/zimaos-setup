@@ -1,0 +1,39 @@
+name: kavita
+services:
+    kavita:
+        container_name: kavita
+        deploy:
+            resources:
+                reservations:
+                    memory: "134217728"
+        environment:
+            TZ: ${TZ}
+        image: jvmilazz0/kavita:0.9.0.2@sha256:5bbb42f85a67d2cd27b051d8bd407f00d521734ff5d096da73f931cd65f1cf48
+        labels:
+            icon: https://cdn.jsdelivr.net/gh/IceWhaleTech/CasaOS-AppStore@gh-pages/apps/org.icewhale.kavita/assets/icon.svg
+        network_mode: bridge
+        ports:
+            - target: 5000
+              published: "5150"
+              protocol: tcp
+        restart: unless-stopped
+        volumes:
+            - type: bind
+              source: ${APPDATA_ROOT}/kavita/config
+              target: /kavita/config
+            - type: bind
+              source: ${DATA4TB_MOUNT}/Media/Manga
+              target: /manga
+x-casaos:
+    icon: https://cdn.jsdelivr.net/gh/IceWhaleTech/CasaOS-AppStore@gh-pages/apps/org.icewhale.kavita/assets/icon.svg
+    id: org.icewhale.kavita
+    index: /
+    is_uncontrolled: false
+    main: kavita
+    port_map: "5150"
+    repo_id: zimaos-appstore
+    scheme: http
+    store_app_id: kavita
+    title:
+        en_US: Kavita
+    version: 0.9.0-2
