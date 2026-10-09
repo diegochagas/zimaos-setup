@@ -263,9 +263,8 @@ the progress in the ZimaOS web UI.
 Restore the app data root (`APPDATA_ROOT`) and the `DATA4TB` folders from
 the workstation backup with
 [homelab-backup's `restore.sh`](https://github.com/diegochagas/homelab-backup),
-then restart the apps. Tailscale login, the Cloudflared tunnel token and
-Vaultwarden's admin token all live inside the restored AppData folders, so
-no re-pairing is needed.
+then restart the apps. Tailscale login and Vaultwarden's admin token both
+live inside the restored AppData folders, so no re-pairing is needed.
 
 The backup also holds the projects' gitignored env files
 (`Backups/Projects`). Once they are back in `PROJECTS_DIR`, run
