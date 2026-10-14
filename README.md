@@ -199,11 +199,11 @@ Then edit `config.sh` with the real paths, server address and secrets.
 The file is gitignored and **required** — both scripts refuse to run while
 it is missing or incomplete, so no value ever needs to exist in the code.
 A filled-in copy is kept at
-`~/Nextcloud/Documents/Credentials/zimaos-setup__config.sh` on the
+`/mnt/data/nextcloud/Documents/Credentials/zimaos-setup__config.sh` on the
 workstation (same pattern as the other repos) — restoring it is enough:
 
 ```bash
-scp ~/Nextcloud/Documents/Credentials/zimaos-setup__config.sh <user>@<server-ip>:/DATA/Projects/zimaos-setup/config.sh
+scp /mnt/data/nextcloud/Documents/Credentials/zimaos-setup__config.sh <user>@<server-ip>:/DATA/Projects/zimaos-setup/config.sh
 ```
 
 ## Step 4 - Install the Apps
@@ -307,9 +307,10 @@ secret that still needs a variable in `config.sh` and a matching rule in
 
 ## Configuration
 
-All values live in `config.sh` (gitignored, required — see
-`config.sh.example` for the template and the Credentials folder for the
-filled-in copy):
+All values live in `config.sh` (gitignored and required — see
+`config.sh.example`). Its filled-in backup belongs in Credentials because it
+contains real passwords and API tokens; ordinary data paths within it should
+still point to the server's visible mounted volumes:
 
 | Variable | Purpose |
 | -------- | ------- |
