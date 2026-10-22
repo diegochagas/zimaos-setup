@@ -8,7 +8,8 @@
 # Copy this file to config.sh and fill in every value
 # for the target installation. config.sh is gitignored,
 # so paths, addresses and secrets never reach the
-# repository; keep a filled-in copy in the Credentials
+# repository. This file contains real passwords and API
+# tokens, so keep a filled-in copy in the Credentials
 # folder (zimaos-setup__config.sh).
 #
 # setup.sh and export.sh refuse to run while a required
