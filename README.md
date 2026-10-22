@@ -198,12 +198,12 @@ mkdir -p /DATA/Projects && cd /DATA/Projects && git clone https://github.com/die
 Then edit `config.sh` with the real paths, server address and secrets.
 The file is gitignored and **required** — both scripts refuse to run while
 it is missing or incomplete, so no value ever needs to exist in the code.
-A filled-in copy is kept at
-`/mnt/data/nextcloud/Documents/Credentials/zimaos-setup__config.sh` on the
-workstation (same pattern as the other repos) — restoring it is enough:
+A filled-in copy is kept as `zimaos-setup__config.sh` in the Credentials
+folder on the workstation (same pattern as the other repos; replace
+`<credentials-folder>` with where yours lives) — restoring it is enough:
 
 ```bash
-scp /mnt/data/nextcloud/Documents/Credentials/zimaos-setup__config.sh <user>@<server-ip>:/DATA/Projects/zimaos-setup/config.sh
+scp <credentials-folder>/zimaos-setup__config.sh <user>@<server-ip>:/DATA/Projects/zimaos-setup/config.sh
 ```
 
 ## Step 4 - Install the Apps
