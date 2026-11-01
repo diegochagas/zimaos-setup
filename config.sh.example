@@ -80,6 +80,10 @@ PGID=""
 # ROMM_IGDB_CLIENT_SECRET
 #                        IGDB API credentials RomM uses to
 #                        scrape game metadata/covers.
+# SYNCTHING_API_KEY      REST API key of the Syncthing app
+#                        (set in its container; the music
+#                        folder and the devices are
+#                        configured through it).
 #
 PIHOLE_WEB_PASSWORD=""
 POSTGRESQL_DB=""
@@ -90,6 +94,7 @@ ROMM_DB_PASSWORD=""
 ROMM_DB_ROOT_PASSWORD=""
 ROMM_IGDB_CLIENT_ID=""
 ROMM_IGDB_CLIENT_SECRET=""
+SYNCTHING_API_KEY=""
 
 #
 # Extra app stores registered before installing apps,

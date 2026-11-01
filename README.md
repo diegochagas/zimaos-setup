@@ -328,6 +328,7 @@ still point to the server's visible mounted volumes:
 | `ROMM_DB_PASSWORD` | RomM's MariaDB app user — must match restored mysql data |
 | `ROMM_DB_ROOT_PASSWORD` | RomM's MariaDB root password |
 | `ROMM_IGDB_CLIENT_ID` / `ROMM_IGDB_CLIENT_SECRET` | IGDB API credentials RomM uses for game metadata scraping |
+| `SYNCTHING_API_KEY` | REST API key of the Syncthing app (shares `Media/Music` with the laptop and phones) |
 | `EXTRA_APP_STORES` | Extra app stores to register (optional) |
 | `PROJECTS_DIR` | Where the self-managed projects are cloned (optional) |
 | `DOCKER_DNS_SERVERS` | DNS servers for Docker's daemon.json (optional) |
