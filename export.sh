@@ -109,6 +109,10 @@ template_app() {
                 -e "s|IGDB_CLIENT_SECRET: .*|IGDB_CLIENT_SECRET: \${ROMM_IGDB_CLIENT_SECRET}|"
             ;;
 
+        syncthing)
+            sed -e "s|STGUIAPIKEY: .*|STGUIAPIKEY: \"\${SYNCTHING_API_KEY}\"|"
+            ;;
+
         *)
             cat
             ;;

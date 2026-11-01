@@ -285,6 +285,55 @@ Channels show up after Jellyfin's "Refresh Guide" task runs (Dashboard >
 Scheduled Tasks — run it by hand to skip the wait). See
 [Jellyfin Live TV Tuners](#jellyfin-live-tv-tuners).
 
+## Music Library Sync (Syncthing)
+
+The YouTube Music library that homelab-monitor's agent keeps in
+`Media/Music/YouTube Liked` on the data drive (songs, `.lrc` lyrics and the
+`.m3u8` playlist files it writes) is shared by the Syncthing app
+([steps/apps/compose/syncthing.yml](steps/apps/compose/syncthing.yml)) as a
+**send-only** folder, id `youtube-liked`, path `/music/YouTube Liked` inside
+the container. Every device keeps a **receive-only** copy, so new likes
+arrive and unliked songs disappear everywhere without a music server in the
+middle; any player that reads M3U sees the playlists.
+
+- Web UI: `http://<server>:8384` (LAN or Tailscale). `SYNCTHING_API_KEY` in
+  `config.sh` is its REST API key, so the folder and the devices can be set
+  without the UI:
+
+  ```bash
+  curl -H "X-API-Key: $SYNCTHING_API_KEY" http://<server>:8384/rest/config/folders
+  ```
+
+- The UI has no password; set one under Settings → GUI if the server is
+  reachable from outside your LAN/Tailscale.
+
+**Laptop** (Linux Mint, see linux-mint-setup's Syncthing step): add the
+server as a device (its id is under Actions → Show ID in the server's UI;
+address `tcp://<server tailscale ip>:22000` plus `dynamic`), accept the
+shared folder as *Receive Only* into `/mnt/data/Music/YouTube Liked`, and
+open the `.m3u8` files with any player (Strawberry gets one launcher per
+playlist).
+
+**Phones** (Android), once per phone, no computer needed:
+
+1. Install **Syncthing-Fork** (Play Store or F-Droid; the original Android
+   app was discontinued) and, for syncing away from home, keep Tailscale on.
+2. In the app: Devices → + → scan the QR code shown by the server's UI under
+   Actions → Show ID. Give it the name `zimaos` and, under addresses, add
+   `tcp://<server tailscale ip>:22000` before `dynamic`.
+3. In the server's UI a "new device" banner appears: *Add Device*, then
+   share the folder **YouTube Liked** with it (Edit folder → Sharing).
+4. Back on the phone, accept the shared folder: type *Receive Only*,
+   directory `Music/YouTube Liked` on internal storage (about 18 GB).
+   In the app settings, sync on Wi-Fi only (and while charging, if you like).
+5. Player: **Poweramp** (paid) rescans the folder on its own and lists the
+   `.m3u8` files under Playlists; **Musicolet** (free) needs Playlists →
+   Import once per file. Both read the `.lrc` lyrics next to the songs.
+
+Jellyfin also notices the `.m3u8` files in its music library and lists them
+as playlists of its own; they stay empty (it doesn't resolve the relative
+paths), so keep using the playlists the agent maintains there.
+
 ## Keeping the Export in Sync
 
 After installing or reconfiguring apps in the ZimaOS web UI, refresh the
@@ -328,6 +377,7 @@ still point to the server's visible mounted volumes:
 | `ROMM_DB_PASSWORD` | RomM's MariaDB app user — must match restored mysql data |
 | `ROMM_DB_ROOT_PASSWORD` | RomM's MariaDB root password |
 | `ROMM_IGDB_CLIENT_ID` / `ROMM_IGDB_CLIENT_SECRET` | IGDB API credentials RomM uses for game metadata scraping |
+| `SYNCTHING_API_KEY` | REST API key of the Syncthing app (shares `Media/Music` with the laptop and phones) |
 | `EXTRA_APP_STORES` | Extra app stores to register (optional) |
 | `PROJECTS_DIR` | Where the self-managed projects are cloned (optional) |
 | `DOCKER_DNS_SERVERS` | DNS servers for Docker's daemon.json (optional) |

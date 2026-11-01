@@ -44,7 +44,8 @@ require_config_values \
     ROMM_DB_PASSWORD \
     ROMM_DB_ROOT_PASSWORD \
     ROMM_IGDB_CLIENT_ID \
-    ROMM_IGDB_CLIENT_SECRET
+    ROMM_IGDB_CLIENT_SECRET \
+    SYNCTHING_API_KEY
 
 ########################################
 # Libraries and steps

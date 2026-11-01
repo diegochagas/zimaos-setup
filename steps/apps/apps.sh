@@ -40,6 +40,7 @@ readonly APP_RENDER_VARIABLES=(
     ROMM_DB_ROOT_PASSWORD
     ROMM_IGDB_CLIENT_ID
     ROMM_IGDB_CLIENT_SECRET
+    SYNCTHING_API_KEY
 )
 
 # Renders an app file to standard output, substituting only

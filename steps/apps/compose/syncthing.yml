@@ -1,0 +1,52 @@
+name: syncthing
+services:
+    syncthing:
+        container_name: syncthing
+        environment:
+            PGID: "${PGID}"
+            PUID: "${PUID}"
+            STGUIAPIKEY: "${SYNCTHING_API_KEY}"
+        hostname: zimaos
+        image: syncthing/syncthing:2.1@sha256:2b71da7c0d0a91a6ae5285ad079226fecc0a365d08b27720e1f7037b018f7546
+        labels:
+            icon: https://cdn.jsdelivr.net/gh/selfhst/icons/png/syncthing.png
+        network_mode: bridge
+        ports:
+            - target: 8384
+              published: "8384"
+              protocol: tcp
+            - target: 22000
+              published: "22000"
+              protocol: tcp
+            - target: 22000
+              published: "22000"
+              protocol: udp
+            - target: 21027
+              published: "21027"
+              protocol: udp
+        restart: unless-stopped
+        stop_grace_period: 1m
+        volumes:
+            - type: bind
+              source: ${APPDATA_ROOT}/syncthing/config
+              target: /var/syncthing
+            - type: bind
+              source: ${DATA4TB_MOUNT}/Media/Music
+              target: /music
+x-casaos:
+    architectures:
+        - amd64
+        - arm64
+    author: syncthing
+    category: Others
+    developer: syncthing
+    hostname: ${SERVER_IP}
+    icon: https://cdn.jsdelivr.net/gh/selfhst/icons/png/syncthing.png
+    index: /
+    is_uncontrolled: false
+    main: syncthing
+    port_map: "8384"
+    scheme: http
+    title:
+        custom: Syncthing
+        en_US: Syncthing
